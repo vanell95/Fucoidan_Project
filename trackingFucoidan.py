@@ -139,6 +139,28 @@ plt.ylim(1,5)
 plt.xlabel('fucoidan concentration (mg/mL)')
 plt.ylabel('Reorientation frequency (1/s)')
 
-plt.rcParams['axes.labelsize'] = 30 # Set default axis label size
-plt.rcParams['xtick.labelsize'] = 30  # Set default x-tick label size
-plt.rcParams['ytick.labelsize'] = 30 
+plt.rcParams['axes.labelsize'] = 50 # Set default axis label size
+plt.rcParams['xtick.labelsize'] = 50  # Set default x-tick label size
+plt.rcParams['ytick.labelsize'] = 50 
+
+#%%
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(20, 20))
+sns.lineplot(data=dF, x='fuc', y='motFrac', linewidth=8)
+
+# Plot horizontal line at mean motility for fuc == 0
+mean_motFrac_fuc0 = dF.loc[dF['fuc'] == 0, 'motFrac'].mean()
+plt.plot([0.001, 10], [mean_motFrac_fuc0, mean_motFrac_fuc0], 
+         color='gray', linestyle='-', linewidth=10, label='ASW')
+
+plt.xscale('log')
+plt.ylim(0, 1)  # Adjust if motFrac is percentage (use 0,100 instead)
+plt.xlabel('Fucoidan concentration (mg/mL)')
+plt.ylabel('Fraction of motile cells')
+
+
+plt.legend(prop={'size': 50},loc='upper right')
+plt.tight_layout()
+plt.show()

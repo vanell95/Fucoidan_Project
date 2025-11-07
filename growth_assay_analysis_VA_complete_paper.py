@@ -8,25 +8,29 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import matplotlib.cm as cm
+import re
 
 plt.close('all')
 
 # Load the data and adjust the time column
-DAT = pd.read_excel("C:/Users/Anelli/Desktop/Experiments/Growth assay/PAPER_240701_Growthassay_Fucoidan_GlucNAG/Growth_assay_Fucoidan_GlucNAG_plotting_48h.xlsx")
+DAT = pd.read_excel("C:/Users/Anelli/Desktop/Experiments/Growth assay/PAPER_250418_GlucNAc_gradient_Fucoidan_baseline/250418_GlucNAc_gradient_Fucoidan_baseline.xlsx")
 DAT['time'] = DAT.index /10  # in hours, given 10 measurements per hour
 
 # Define strain and condition lists
-strainList = ['Vibrio cyclitrophicus', 'Pseudoalteromonas ASV16','Pseudocolwellia AS88','Vibrio coralliilytiicus']
-#conditionList = ["Fucoidan 1mg/ml","Oligo Alginate 0.01mg/ml + Fucoidan 1mg/ml","Oligo alginate 0.1mg/ml + Fucoidan 1mg/ml","Oligo alginate 1mg/ml + Fucoidan 1mg/ml","Oligo alginate 10mg/ml + Fucoidan 1mg/ml","F/2 medium"]
+strainList = ['ZF270','ASV16','AS88','YB1']
 #conditionList = ["Oligo alginate 1mg/ml", "Fucoid 1mg/ml + Oligo Alginate 1mg/ml","Fucoid 0.1mg/ml + Oligo Alginate 1mg/ml", "Fucoid 0.01mg/ml + Oligo Alginate 1mg/ml","Fucoid 0.001mg/ml + Oligo Alginate 1mg/ml","F/2 medium"]
-conditionList = ["Fucoidan 1mg/ml", "Fucoid 1mg/ml + GlucNAc 0.1mM", "Fucoid 1mg/ml + GlucNAc 1mM", "Fucoid 1mg/ml + GlucNAc 10mM","F/2 medium"]
+conditionList = ["Fucoid 1mg/ml","GlucNAc 0.1mM + Fucoidan 1mg/ml","GlucNAc 1mM + Fucoidan 1mg/ml","GlucNAc 10mM + Fucoidan 1mg/ml","GlucNAc 10mM","F/2 medium"]
+#conditionList = ['F/2 medium','Fucoid 0.001mg/ml','Fucoid 0.01mg/ml','Fucoid 0.1mg/ml','Fucoid 1mg/ml']
+#conditionList = ['GlucNAc 1mM','GlucNAc 1mM + Fucoid 0.001mg/ml','GlucNAc 1mM + Fucoid 0.01mg/ml','GlucNAc 1mM + Fucoid 0.1mg/ml','GlucNAc 1mM + Fucoid 1mg/ml','F/2 medium']
+#conditionList = ['Fucoid 1mg/ml','Oligo Alginate 1mg/ml','Fucoid 1mg/ml + Alginate 1mg/ml','Fucoid 1mg/ml + Alginate 0.1mg/ml','Fucoid 1mg/ml + Alginate 0.01mg/ml','F/2 medium']
 conditionList =[0,0.1,1,10] #to plot the max O.D or max growth rate you exclude all the control values
 # Define colors for each strain
 strain_colors = {
-    'Vibrio cyclitrophicus': 'dodgerblue',
-    'Pseudoalteromonas ASV16': 'forestgreen',
-    'Pseudocolwellia AS88': 'firebrick',
-    'Vibrio coralliilytiicus': 'darkorchid'
+    'ZF270': 'dodgerblue',
+    'ASV16': 'forestgreen',
+    'AS88': 'firebrick',
+    'YB1': 'darkorchid'
 }
 
 #bck = 0.001
@@ -39,7 +43,7 @@ plt.subplots_adjust(hspace=0.7, wspace=0.3)
 
 for ii in range(16):  # 24 combinations (4 strains * 6 conditions)
     rowIn = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    colIn = ['1','2','3','4','5','6', '7', '8']
+    colIn = ['1','2','3','4','5','6','7','8']
     wells[ii] = [rowIn[rr] + colIn[cc] for rr, cc in zip(range(4 * np.mod(int(np.floor(ii / 1)), 2), 4 * np.mod(int(np.floor(ii / 1)), 2) + 4), [1 * int(np.floor(ii / 2)) for x in range(4)])]
     bck = DAT[wells[ii]].mean(axis=1)[0] + 0.001
     strain_condition_key = strainList[np.mod(ii, 4)] + '_' + str(conditionList[int(np.floor(ii / 4))])
@@ -64,7 +68,7 @@ for ii in range(16):  # 24 combinations (4 strains * 6 conditions)
   })
 
     # Plotting optical density with colors for each strain
-    plt.subplot(5, 4, ii + 1 )
+    plt.subplot(6, 4, ii + 1 )
     plt.plot(DAT['time'], opt_dens, color=strain_colors[strainList[np.mod(ii, 4)]])
     plt.fill_between(DAT['time'], opt_dens - opt_dens_std, opt_dens + opt_dens_std, color=strain_colors[strainList[np.mod(ii, 4)]], alpha=0.3)
     plt.ylim((0.001, 1))
@@ -89,152 +93,107 @@ plt.plot()
 import matplotlib.pyplot as plt
 
 # Assuming DAT is a DataFrame and wells is a list of column names or indices
-plt.figure(figsize=(18,18))
+plt.figure(figsize=(20,20))
 
 # Plotting the data with thicker lines and standard deviation as shaded regions
-ii = 0
+ii = 1
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'k-', linewidth=5, label='Fucoidan 1mg/ml')
-plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='k', alpha=0.3)
+plt.plot(DAT['time'], mean_values, 'olive', linewidth=5, label='Fucoidan 1mg/ml')
+plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='olive', alpha=0.3)
 
-ii = 4
-mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
-
-plt.plot(DAT['time'], mean_values, 'lightsalmon', linewidth=5, label='GlucNAc 0.1mM + Fucoidan 1mg/ml')
-plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='lightsalmon', alpha=0.3)
-
-ii = 8
+ii = 5
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'red', linewidth=5, label='GlucNAc 1mM + Fucoidan 1mg/ml')
+plt.plot(DAT['time'], mean_values, 'salmon', linewidth=5, label='Fucoidan 1mg/ml + GlucNAc 0.1mM ')
+plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='salmon', alpha=0.3)
+
+ii = 9
+mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
+std_values = DAT[wells[ii]].std(axis=1)
+plt.plot(DAT['time'], mean_values, 'tomato', linewidth=5, label='Fucoidan 1mg/ml + GlucNAc 1mM')
+plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='tomato', alpha=0.3)
+
+ii = 13
+mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
+std_values = DAT[wells[ii]].std(axis=1)
+plt.plot(DAT['time'], mean_values, 'red', linewidth=5, label='Fucoidan 1mg/ml + GlucNAc 10mM')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='red', alpha=0.3)
 
-ii = 12
+ii = 17
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'darkred', linewidth=5, label='GlucNAc 10mM + Fucoidan 1mg/ml')
+plt.plot(DAT['time'], mean_values, 'darkred', linewidth=5, label='GlucNAc 10mM')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='darkred', alpha=0.3)
 
-#ii = 18
-#mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
-#std_values = DAT[wells[ii]].std(axis=1)
-#plt.plot(DAT['time'], mean_values, 'deepskyblue', linewidth=5, label='F/2 medium')
-#plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='deepskyblue', alpha=0.3)
-
-#ii = 21
-#mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
-#std_values = DAT[wells[ii]].std(axis=1)
-#plt.plot(DAT['time'], mean_values, 'grey', linewidth=5, label='F/2 medium')
-#plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='grey', alpha=0.3)
+ii = 21
+mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
+std_values = DAT[wells[ii]].std(axis=1)
+plt.plot(DAT['time'], mean_values, 'grey', linewidth=5, label='F/2 medium')
+plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='grey', alpha=0.3)
 
 
 # Labeling axes
-plt.xlabel('Time (h)', fontsize=32)
+plt.xlabel('Time (h)', fontsize=38)
 plt.xlim(0, 48)
-plt.ylabel('Log (O.D)', fontsize=32)
-plt.yticks(size=32)
-plt.xticks(size=32)
+plt.ylabel('log(OD)', fontsize=38)
+plt.yticks(size=38)
+plt.xticks(size=38)
 plt.yscale('log')
-plt.title("ZF270", fontsize=34)
-plt.ylim(0.001,1)
-
+#plt.title("ASV16", fontsize=34)
+plt.ylim(0.001,2)
+plt.gca().set_facecolor('white')
+plt.grid(False)
 
 # Adding legend
 
-plt.legend(prop={'size': 20},loc='lower right')
+plt.legend(prop={'size': 28},loc='upper left')
 
 # Displaying the plot
 plt.show()
 
-#%% 3 PLOT CUMULATIVE MAX GROWTH RATE
-
-# Create the figure
-plt.figure(figsize=(20,20))
-
-# Define color palettes
-concentration_palette = sns.color_palette("deep", len(dF['concentration'].unique()))  # For concentrations
-custom_colors = ["dodgerblue", "forestgreen", "firebrick", "darkorchid"]
-strain_palette = sns.color_palette(custom_colors[:len(dF['strain'].unique())])  # For strains
-
-# Create the boxplot to differentiate concentrations
-sns.boxplot(
-    x='concentration',
-    y='max_growth_rate',
-    data=dF,
-    palette=concentration_palette,
-    showmeans=True,
-    meanline=True
-)
-
-# Overlay the swarmplot to show individual replicates, colored by strain
-sns.swarmplot(
-    x='concentration',
-    y='max_growth_rate',
-    data=dF,
-    hue='strain',  # Differentiate points by strain
-    palette=strain_palette,
-    size=12,
-    dodge=True  # Slightly offset points
-)
-
-# Rotate x-axis labels for better readability
-plt.xticks(rotation=45, size=24)
-plt.yticks(size=28)
-
-# Set labels and title
-plt.xlabel('Concentration', fontsize=28)
-plt.ylabel('Max Growth Rate', fontsize=28)
-plt.title('Average Max Growth Rate', size=28)
-
-# Add legends for strain colors
-plt.legend(fontsize=26, loc='upper right')
-
-# Display the plot
-plt.tight_layout()
-plt.show()
-
-
 #%% PLOT CUMULATIVE MAX OD
+import matplotlib.pyplot as plt
 
-plt.figure(figsize=(18, 18))
+# Manually defined colors based on your image
+# Adjust the order to match the order in `strains`
+custom_colors = [
+    '#1f77b4',  # Blue — Vibrio cyclitrophicus
+    '#2ca02c',  # Orange - Vibrio coralliilyticus 
+    '#d62728',  # Green — Pseudoalteromonas ASV16
+    '#ff7f0e'   # Red — Pseudocollwellia AS88
+]
+strains = dF['strain'].unique()
+plt.figure(figsize=(16, 16))
 
-for strain in dF['strain'].unique():
+for i, strain in enumerate(strains):
     strain_data = dF[dF['strain'] == strain]
     mean_values = strain_data.groupby('concentration')['OD'].mean()
-    std_values = strain_data.groupby('concentration')['OD_std'].mean()  # Use stored standard deviation
+    std_values = strain_data.groupby('concentration')['OD_std'].mean()
     concentrations = mean_values.index
 
-    plt.plot(concentrations, mean_values, label=strain, linewidth=5)
-    plt.fill_between(concentrations, mean_values - std_values, mean_values + std_values,
-                     alpha=0.3,)
+    color = custom_colors[i % len(custom_colors)]  # Wrap around if more strains than colors
 
+    # Plot the line
+    plt.plot(concentrations, mean_values, label=strain, linewidth=5, color=color)
+
+    # Add scatter points
+    plt.scatter(concentrations, mean_values, color=color, s=200)
+
+    # Add the shaded error area
+    plt.fill_between(concentrations, mean_values - std_values, mean_values + std_values,
+                     alpha=0.3, color=color)
+
+# Axis and style settings
 plt.xscale('log')
-plt.xlabel('GlucNAc concentration (mM)', fontsize=28)
-plt.ylabel('Max OD', fontsize=28)
-plt.title('Max OD vs. Concentration', fontsize=28)
-plt.xticks(size=28)
-plt.yticks(size=28)
-plt.legend(prop={'size': 24}, loc='upper left')
+plt.xlabel('GlucNAc concentration (mM)', fontsize=34)
+plt.ylabel('Max OD', fontsize=38)
+plt.ylim(0.0001,2)
+plt.xticks(size=38)
+plt.yticks(size=38)
+plt.grid(False)
+plt.legend(prop={'size': 34}, loc='upper left')
 plt.tight_layout()
+plt.grid
 plt.show()
 
-#%% PLOT COMULATIVE MAX FROWTH RATE
-plt.figure(figsize=(18,18))
-for strain in dF['strain'].unique():
-    strain_data = dF[dF['strain'] == strain]
-    mean_values = strain_data.groupby('concentration')['gr_time'].mean()
-    std_values = strain_data.groupby('concentration')['gr_std'].mean()  # Use stored standard deviation
-    concentrations = mean_values.index
-
-    plt.plot(concentrations, mean_values, label=strain, linewidth=5)
-    plt.fill_between(concentrations, mean_values - std_values, mean_values + std_values,
-                     alpha=0.3,)
-
-plt.xscale('log')
-plt.xlabel('GlucNAc concentration (mM)', fontsize=28)
-plt.ylabel('Max Growth Rate', fontsize=28)
-plt.title('Max Growth Rate vs. Concentration', fontsize=28)
-plt.xticks(size=28)
-plt.yticks(size=28)
-plt.legend(prop={'size': 24}, loc='upper right')
