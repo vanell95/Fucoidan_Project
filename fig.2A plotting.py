@@ -1,34 +1,33 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct  8 12:13:58 2025
-
-@author: Anelli
-"""
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
-import re
 
 # -----------------------------
 # USER INPUT
 # -----------------------------
-# Put one or two CSVs here. Each CSV should have columns: ID, IC
-# Example: one experiment
-csv_paths = ["C:/Users/Anelli/Desktop/plottingYB1.csv"]
-exp_labels = ["YB1"]  # must match length of csv_paths
+csv_paths = ["C:/Users/Anelli/Desktop/Experiments/ISCA_experiments/Fucoidan project/Fucoidan_purified_Fucus_gradient/plottingYB1_FIG2A.csv"]
+exp_labels = ["YB1"]  # can still keep this even if single experiment
 
-# Order concentrations as you want them on the x-axis
+# Order on x-axis (as in panel A)
 conc_order = ["ASW", "0.001mg/ml", "0.01mg/ml", "0.1mg/ml", "1mg/ml"]
+baseline_conc = "ASW"
+
+# Colors as in panel A (matplotlib default blue + orange)
+genotype_colors = {
+    "WT": "#1f77b4",
+    "ΔCheA": "#ff7f0e"
+}
+
+# For raw-point jitter (within each x category)
+rng = np.random.default_rng(0)
+raw_jitter = 0.06
 
 # -----------------------------
 # LOAD + TIDY
 # -----------------------------
-def parse_id(id_str):
-    # Split like "WT_0.01mg/ml" or "ΔCheA_ASW"
-    # Genotype = part before first underscore; Concentration = remainder
-    parts = id_str.split("_", 1)
+def parse_id(id_str: str):
+    parts = str(id_str).split("_", 1)
     genotype = parts[0]
     concentration = parts[1] if len(parts) > 1 else ""
     return genotype, concentration
@@ -36,7 +35,7 @@ def parse_id(id_str):
 frames = []
 for path, label in zip(csv_paths, exp_labels):
     df = pd.read_csv(path)
-    if not {"ID","IC"}.issubset(df.columns):
+    if not {"ID", "IC"}.issubset(df.columns):
         raise ValueError(f"{path} must contain columns: ID, IC")
     parsed = df["ID"].apply(parse_id)
     df["Genotype"] = parsed.apply(lambda t: t[0])
@@ -46,77 +45,111 @@ for path, label in zip(csv_paths, exp_labels):
 
 data = pd.concat(frames, ignore_index=True)
 
-# Ensure concentration order (treat as categorical)
-data["Concentration"] = pd.Categorical(data["Concentration"], categories=conc_order, ordered=True)
+# categorical concentration order
+data["Concentration"] = pd.Categorical(
+    data["Concentration"], categories=conc_order, ordered=True
+)
 
 # -----------------------------
 # AGGREGATE (mean ± SD)
 # -----------------------------
 summary = (
     data
-    .groupby(["Experiment", "Genotype", "Concentration"], observed=True, as_index=False)
+    .groupby(["Genotype", "Concentration"], observed=True, as_index=False)
     .agg(IC_mean=("IC", "mean"), IC_sd=("IC", "std"), n=("IC", "size"))
 )
-
-# Drop rows with concentrations not in the chosen order (NaN categories)
 summary = summary.dropna(subset=["Concentration"])
 
-fig, ax = plt.subplots(figsize=(10, 8))
+# -----------------------------
+# PLOT (panel A style)
+# -----------------------------
+fig, ax = plt.subplots(figsize=(6.0, 5.0))  # close to panel A aspect
 
-x_levels = [c for c in conc_order
-            if c in summary["Concentration"].cat.categories
-            and c in summary["Concentration"].unique().tolist()]
+# X mapping
+x_levels = [c for c in conc_order if c in summary["Concentration"].cat.categories]
 x_pos = {c: i for i, c in enumerate(x_levels)}
 
-# Jitter across experiments (set to 0.0 if you want exact alignment)
-if len(exp_labels) == 1:
-    jitter_map = {exp_labels[0]: 0.0}
-elif len(exp_labels) == 2:
-    jitter_map = {exp_labels[0]: -0.05, exp_labels[1]: 0.05}
-else:
-    offsets = np.linspace(-0.08, 0.08, num=len(exp_labels))
-    jitter_map = {lab: off for lab, off in zip(exp_labels, offsets)}
+# Baseline dashed line at IC = 1 (grey, dashed)
+ax.axhline(1, linestyle=(0, (4, 4)), linewidth=1.5, color="0.7", zorder=0)
 
-linestyles = ["-", "--", "-.", ":"]
-ls_map = {lab: linestyles[i % len(linestyles)] for i, lab in enumerate(exp_labels)}
+# Raw replicate dots (black), jittered slightly; ASW in grey
+for conc in x_levels:
+    sub = data[data["Concentration"] == conc].copy()
+    if sub.empty:
+        continue
 
-for exp in exp_labels:
-    for genotype in summary["Genotype"].unique():
-        sub = summary[(summary["Experiment"] == exp) & (summary["Genotype"] == genotype)].copy()
-        if sub.empty:
-            continue
-        sub = sub.sort_values("Concentration")
-        x = np.array([x_pos[c] + jitter_map.get(exp, 0.0) for c in sub["Concentration"]])
-        y = sub["IC_mean"].to_numpy()
-        sd = sub["IC_sd"].to_numpy()
+    x0 = x_pos[conc]
+    xj = x0 + rng.uniform(-raw_jitter, raw_jitter, size=len(sub))
 
-        ax.plot(
-            x, y,
-            linestyle=ls_map[exp],
-            marker="o",
-            linewidth=4,     # thicker line
-            markersize=12,     # bigger points
-            label=f"{genotype} ({exp})"
-        )
-        ax.fill_between(x, y - sd, y + sd, alpha=0.2)
+    if conc == baseline_conc:
+        ax.scatter(xj, sub["IC"], s=30, color="0.5", alpha=0.9, zorder=2)
+    else:
+        ax.scatter(xj, sub["IC"], s=30, color="k", alpha=0.9, zorder=2)
 
-# Axis labels & title
+# Mean ± SD for ASW (control), shown as colored point + error bar (no line)
+asw_summary = summary[summary["Concentration"] == baseline_conc]
+for genotype in asw_summary["Genotype"].unique():
+    sub = asw_summary[asw_summary["Genotype"] == genotype]
+    if sub.empty:
+        continue
+
+    x = x_pos[baseline_conc]
+    y = float(sub["IC_mean"].iloc[0])
+    sd = float(sub["IC_sd"].iloc[0]) if not np.isnan(sub["IC_sd"].iloc[0]) else 0.0
+    ax.errorbar(
+    x, y, yerr=sd,
+    fmt="o",
+    color="0.35",          # dark grey for control
+    markersize=6.5,
+    capsize=3.5,
+    linewidth=1.8,
+    zorder=3
+    )
+
+# Genotype means ± SD as colored lines/markers, excluding ASW from the line
+for genotype in summary["Genotype"].unique():
+    col = genotype_colors.get(genotype, None)
+
+    sub = summary[summary["Genotype"] == genotype].copy()
+    sub = sub[sub["Concentration"] != baseline_conc].sort_values("Concentration")
+    if sub.empty:
+        continue
+
+    x = np.array([x_pos[c] for c in sub["Concentration"]])
+    y = sub["IC_mean"].to_numpy()
+    sd = np.nan_to_num(sub["IC_sd"].to_numpy(), nan=0.0)
+
+    ax.errorbar(
+        x, y, yerr=sd,
+        fmt="o-",
+        color=col,
+        linewidth=2.2,
+        markersize=6.5,
+        capsize=3.5,
+        zorder=3,
+        label=f"Vibrio coralliilyticus YB1 {genotype}"
+    )
+
+# Axis formatting (panel A: log y)
+ax.set_yscale("log")
+ax.set_ylim(0.6, 20)
+
 ax.set_xticks([x_pos[c] for c in x_levels])
-ax.set_xticklabels(x_levels)
-ax.tick_params(axis='both', labelsize=25) 
-ax.set_xlabel("Fucoidan concentration (mg/ml)", fontsize=25)
-ax.set_ylabel("Chemotactic Index (IC)", fontsize=25)
-ax.set_ylim(0,20)
+ax.set_xticklabels(["ASW", "0.001", "0.01", "0.1", "1"], fontsize=11)
 
+ax.set_xlabel("Fucoidan (mg/mL)", fontsize=13)
+ax.set_ylabel(r"Chemotactic Index ($I_c$)", fontsize=13)
 
-# Ensure no grid at all
+ax.tick_params(axis="y", labelsize=11)
 ax.grid(False)
 
-# Simple legend (no dedup step that could drop handles)
-ax.legend(loc="best", frameon=False, fontsize=24, ncol=2)
-
-# Optional: slightly larger tick labels
-# ax.tick_params(axis="both", labelsize=12)
+# Legend in upper-left, with box
+leg = ax.legend(loc="upper left", frameon=True, fontsize=10, borderpad=0.4)
+leg.get_frame().set_linewidth(0.8)
+leg.get_frame().set_edgecolor("0.8")
 
 plt.tight_layout()
+
+# Export if needed:
+# plt.savefig("Fig2A_panelA.pdf", dpi=300, bbox_inches="tight")
 plt.show()

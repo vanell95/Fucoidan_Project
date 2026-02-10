@@ -14,17 +14,17 @@ import re
 plt.close('all')
 
 # Load the data and adjust the time column
-DAT = pd.read_excel("C:/Users/Anelli/Desktop/Experiments/Growth assay/PAPER_250418_GlucNAc_gradient_Fucoidan_baseline/250418_GlucNAc_gradient_Fucoidan_baseline.xlsx")
+DAT = pd.read_excel("C:/Users/Anelli/Desktop/Experiments/Growth assay/PAPER_241206_OligoAlginate_gradient_Fucoidan_ baseline/241206_OligoAlginate_gradient_Fucoidan_ baseline.xlsx")
 DAT['time'] = DAT.index /10  # in hours, given 10 measurements per hour
 
 # Define strain and condition lists
 strainList = ['ZF270','ASV16','AS88','YB1']
 #conditionList = ["Oligo alginate 1mg/ml", "Fucoid 1mg/ml + Oligo Alginate 1mg/ml","Fucoid 0.1mg/ml + Oligo Alginate 1mg/ml", "Fucoid 0.01mg/ml + Oligo Alginate 1mg/ml","Fucoid 0.001mg/ml + Oligo Alginate 1mg/ml","F/2 medium"]
-conditionList = ["Fucoid 1mg/ml","GlucNAc 0.1mM + Fucoidan 1mg/ml","GlucNAc 1mM + Fucoidan 1mg/ml","GlucNAc 10mM + Fucoidan 1mg/ml","GlucNAc 10mM","F/2 medium"]
+#conditionList = ["Fucoid 1mg/ml","GlucNAc 0.1mM + Fucoidan 1mg/ml","GlucNAc 1mM + Fucoidan 1mg/ml","GlucNAc 10mM + Fucoidan 1mg/ml","GlucNAc 10mM","F/2 medium"]
 #conditionList = ['F/2 medium','Fucoid 0.001mg/ml','Fucoid 0.01mg/ml','Fucoid 0.1mg/ml','Fucoid 1mg/ml']
 #conditionList = ['GlucNAc 1mM','GlucNAc 1mM + Fucoid 0.001mg/ml','GlucNAc 1mM + Fucoid 0.01mg/ml','GlucNAc 1mM + Fucoid 0.1mg/ml','GlucNAc 1mM + Fucoid 1mg/ml','F/2 medium']
-#conditionList = ['Fucoid 1mg/ml','Oligo Alginate 1mg/ml','Fucoid 1mg/ml + Alginate 1mg/ml','Fucoid 1mg/ml + Alginate 0.1mg/ml','Fucoid 1mg/ml + Alginate 0.01mg/ml','F/2 medium']
-conditionList =[0,0.1,1,10] #to plot the max O.D or max growth rate you exclude all the control values
+conditionList = ['Fucoid 1mg/ml','Oligo Alginate 1mg/ml','Fucoid 1mg/ml + Alginate 1mg/ml','Fucoid 1mg/ml + Alginate 0.1mg/ml','Fucoid 1mg/ml + Alginate 0.01mg/ml','F/2 medium']
+#conditionList =[0,0.01,0.1,1] #to plot the max O.D or max growth rate you exclude all the control values
 # Define colors for each strain
 strain_colors = {
     'ZF270': 'dodgerblue',
@@ -35,15 +35,15 @@ strain_colors = {
 
 #bck = 0.001
 d = []
-wells = [None] * 16  # 4 strains * 6 conditions
+wells = [None] * 24  # 4 strains * 6 conditions
 
 # Create the figure with more space between subplots
 plt.figure(figsize=(34,34))
 plt.subplots_adjust(hspace=0.7, wspace=0.3)
 
-for ii in range(16):  # 24 combinations (4 strains * 6 conditions)
+for ii in range(24):  # 24 combinations (4 strains * 6 conditions)
     rowIn = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    colIn = ['1','2','3','4','5','6','7','8']
+    colIn = ['1','2','3','4','5','6','7','8','9','10','11','12']
     wells[ii] = [rowIn[rr] + colIn[cc] for rr, cc in zip(range(4 * np.mod(int(np.floor(ii / 1)), 2), 4 * np.mod(int(np.floor(ii / 1)), 2) + 4), [1 * int(np.floor(ii / 2)) for x in range(4)])]
     bck = DAT[wells[ii]].mean(axis=1)[0] + 0.001
     strain_condition_key = strainList[np.mod(ii, 4)] + '_' + str(conditionList[int(np.floor(ii / 4))])
@@ -99,37 +99,37 @@ plt.figure(figsize=(20,20))
 ii = 1
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'olive', linewidth=5, label='Fucoidan 1mg/ml')
+plt.plot(DAT['time'], mean_values, 'olive', linewidth=8, label='Fucoidan 1 mg/mL')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='olive', alpha=0.3)
 
 ii = 5
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'salmon', linewidth=5, label='Fucoidan 1mg/ml + GlucNAc 0.1mM ')
+plt.plot(DAT['time'], mean_values, 'salmon', linewidth=8, label='Oligo Alginate 1 mg/mL')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='salmon', alpha=0.3)
 
 ii = 9
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'tomato', linewidth=5, label='Fucoidan 1mg/ml + GlucNAc 1mM')
+plt.plot(DAT['time'], mean_values, 'tomato', linewidth=8, label='Fucoidan 1 mg/ml + Alginate 1 mg/ml')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='tomato', alpha=0.3)
 
 ii = 13
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'red', linewidth=5, label='Fucoidan 1mg/ml + GlucNAc 10mM')
+plt.plot(DAT['time'], mean_values, 'red', linewidth=8, label='Fucoidan 1 mg/ml + Alginate 0.1 mg/ml')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='red', alpha=0.3)
 
 ii = 17
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'darkred', linewidth=5, label='GlucNAc 10mM')
+plt.plot(DAT['time'], mean_values, 'darkred', linewidth=8, label='Fucoidan 1 mg/ml + Alginate 0.01 mg/ml')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='darkred', alpha=0.3)
 
 ii = 21
 mean_values = DAT[wells[ii]].mean(axis=1)-DAT[wells[ii]].mean(axis=1)[0]+0.001
 std_values = DAT[wells[ii]].std(axis=1)
-plt.plot(DAT['time'], mean_values, 'grey', linewidth=5, label='F/2 medium')
+plt.plot(DAT['time'], mean_values, 'grey', linewidth=8, label='F/2 medium')
 plt.fill_between(DAT['time'], mean_values - std_values, mean_values + std_values, color='grey', alpha=0.3)
 
 
@@ -147,32 +147,47 @@ plt.grid(False)
 
 # Adding legend
 
-plt.legend(prop={'size': 28},loc='upper left')
+plt.legend(prop={'size': 40},loc='upper left')
 
 # Displaying the plot
 plt.show()
 
 #%% PLOT CUMULATIVE MAX OD
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Manually defined colors based on your image
-# Adjust the order to match the order in `strains`
 custom_colors = [
     '#1f77b4',  # Blue — Vibrio cyclitrophicus
     '#2ca02c',  # Orange - Vibrio coralliilyticus 
     '#d62728',  # Green — Pseudoalteromonas ASV16
     '#ff7f0e'   # Red — Pseudocollwellia AS88
 ]
+
 strains = dF['strain'].unique()
 plt.figure(figsize=(16, 16))
 
 for i, strain in enumerate(strains):
     strain_data = dF[dF['strain'] == strain]
-    mean_values = strain_data.groupby('concentration')['OD'].mean()
-    std_values = strain_data.groupby('concentration')['OD_std'].mean()
-    concentrations = mean_values.index
 
-    color = custom_colors[i % len(custom_colors)]  # Wrap around if more strains than colors
+    # Group once, then convert to arrays
+    grouped = strain_data.groupby('concentration')[['OD', 'OD_std']].mean()
+    concentrations = grouped.index.to_numpy(dtype=float)
+    mean_values = grouped['OD'].to_numpy()
+    std_values = grouped['OD_std'].to_numpy()
+
+    # ---- NEW: remove non-positive concentrations to avoid log(0) ----
+    mask = concentrations > 0
+    concentrations = concentrations[mask]
+    mean_values = mean_values[mask]
+    std_values = std_values[mask]
+
+    # If nothing left, skip this strain
+    if concentrations.size == 0:
+        continue
+    # ---------------------------------------------------------------
+
+    color = custom_colors[i % len(custom_colors)]
 
     # Plot the line
     plt.plot(concentrations, mean_values, label=strain, linewidth=5, color=color)
@@ -181,19 +196,23 @@ for i, strain in enumerate(strains):
     plt.scatter(concentrations, mean_values, color=color, s=200)
 
     # Add the shaded error area
-    plt.fill_between(concentrations, mean_values - std_values, mean_values + std_values,
-                     alpha=0.3, color=color)
+    plt.fill_between(
+        concentrations,
+        mean_values - std_values,
+        mean_values + std_values,
+        alpha=0.3,
+        color=color,
+    )
 
 # Axis and style settings
 plt.xscale('log')
-plt.xlabel('GlucNAc concentration (mM)', fontsize=34)
+plt.xlabel('Oligo alginate)', fontsize=34)
 plt.ylabel('Max OD', fontsize=38)
-plt.ylim(0.0001,2)
+plt.ylim(0.0001, 0.5)
+plt.xlim(0.009, 1.1)
 plt.xticks(size=38)
 plt.yticks(size=38)
 plt.grid(False)
 plt.legend(prop={'size': 34}, loc='upper left')
 plt.tight_layout()
-plt.grid
 plt.show()
-

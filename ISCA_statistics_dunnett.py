@@ -43,10 +43,10 @@ def run_anova_dunnett(file_path, log_transform=False, alpha=0.05, alternative='t
     if p_val_anova < alpha:
         print("\nANOVA significant (p < {:.3f}), proceeding with Dunnett’s test...".format(alpha))
         
-        control = df[df['ID'] == 'SW']['cellcounts'].values
+        control = df[df['ID'] == 'FSW']['cellcounts'].values
         treatments = [df[df['ID'] == cmpd]['cellcounts'].values
-                      for cmpd in df['ID'].unique() if cmpd != 'SW']
-        labels = [cmpd for cmpd in df['ID'].unique() if cmpd != 'SW']
+                      for cmpd in df['ID'].unique() if cmpd != 'FSW']
+        labels = [cmpd for cmpd in df['ID'].unique() if cmpd != 'FSW']
         
         res = stats.dunnett(*treatments, control=control, alternative=alternative)
         
@@ -65,7 +65,7 @@ def run_anova_dunnett(file_path, log_transform=False, alpha=0.05, alternative='t
 
 
 # Example usage:
-file_path = "C:/Users/Anelli/Desktop/Experiments/ISCA_experiments/Fucoidan project/Fucoidan_Fucus_SW_noK_gradient/statistics.csv"
+file_path = "C:/Users/Anelli/Desktop/Experiments/ISCA_experiments/Mallorca_ISCA_deployment/041023/041022_Depth_statistics.csv"
 
 # Raw IC values
 anova_raw, dunnett_raw = run_anova_dunnett(file_path, log_transform=False)
